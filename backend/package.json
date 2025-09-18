@@ -7,9 +7,11 @@
   "type": "commonjs",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
+    "start": "node scripts/startup.js",
     "dev": "nodemon index.js",
     "ingest": "node scripts/ingest.js",
+    "start:simple": "node index.js",
+    "setup-render": "node ../scripts/setup-render-env.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {

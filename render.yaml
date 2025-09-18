@@ -1,0 +1,44 @@
+services:
+  # Backend Web Service
+  - type: web
+    name: rag-chatbot-backend
+    env: node
+    region: oregon
+    plan: starter
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: JINA_API_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: rag-chatbot-redis
+          property: connectionString
+      - key: CHROMA_URL
+        value: https://chroma-production-xxxxx.onrender.com
+      - key: CHROMA_COLLECTION
+        value: news_articles
+      - key: SESSION_TTL_SECONDS
+        value: 86400
+
+  # Redis for Session Storage
+  - type: redis
+    name: rag-chatbot-redis
+    region: oregon
+    plan: free
+    maxmemoryPolicy: allkeys-lru
+
+  # ChromaDB Vector Database
+  - type: web
+    name: rag-chatbot-chroma
+    env: docker
+    region: oregon
+    plan: starter
+    dockerfilePath: ./chroma.Dockerfile
+    healthCheckPath: /api/v1/heartbeat
