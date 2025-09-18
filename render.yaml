@@ -1,5 +1,5 @@
 services:
-  # Backend Web Service
+  # Backend Web Service (Node.js)
   - type: web
     name: rag-chatbot-backend
     env: node
@@ -16,29 +16,31 @@ services:
       - key: GEMINI_API_KEY
         sync: false
       - key: REDIS_URL
-        fromService:
-          type: redis
-          name: rag-chatbot-redis
-          property: connectionString
+        value: redis://rag-chatbot-redis:6379
       - key: CHROMA_URL
-        value: https://chroma-production-xxxxx.onrender.com
+        value: http://rag-chatbot-chroma:8000
       - key: CHROMA_COLLECTION
         value: news_articles
       - key: SESSION_TTL_SECONDS
         value: 86400
 
-  # Redis for Session Storage
-  - type: redis
+  # Redis (using your Docker Hub image)
+  - type: private_service
     name: rag-chatbot-redis
+    env: docker
     region: oregon
-    plan: free
-    maxmemoryPolicy: allkeys-lru
+    plan: starter
+    dockerImage: manishsyal99/rag-redis:7
+    ports:
+      - port: 6379
 
-  # ChromaDB Vector Database
-  - type: web
+  # ChromaDB (using your Docker Hub image)
+  - type: private_service
     name: rag-chatbot-chroma
     env: docker
     region: oregon
     plan: starter
-    dockerfilePath: ./chroma.Dockerfile
+    dockerImage: manishsyal99/rag-chroma:latest
+    ports:
+      - port: 8000
     healthCheckPath: /api/v1/heartbeat
