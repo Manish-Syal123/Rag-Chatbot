@@ -1,6 +1,7 @@
 require("dotenv").config();
 const { exec } = require("child_process");
 const { promisify } = require("util");
+const redis = require("redis");
 
 const execAsync = promisify(exec);
 
@@ -42,6 +43,31 @@ async function waitForServices() {
   }
 }
 
+async function waitForRedis() {
+  let ready = false;
+  let attempts = 0;
+  const maxAttempts = 30;
+
+  while (!ready && attempts < maxAttempts) {
+    try {
+      const client = redis.createClient({ url: process.env.REDIS_URL });
+      await client.connect();
+      await client.ping();
+      await client.disconnect();
+      ready = true;
+      console.log("✅ Redis is ready");
+    } catch (err) {
+      attempts++;
+      console.log(`⏳ Waiting for Redis... (${attempts}/${maxAttempts})`);
+      await new Promise((res) => setTimeout(res, 2000));
+    }
+  }
+
+  if (!ready) {
+    console.log("⚠️ Redis not ready, continuing anyway");
+  }
+}
+
 async function startServer() {
   console.log("🚀 Starting server...");
   const { exec } = require("child_process");
@@ -66,6 +92,7 @@ async function main() {
   try {
     // Only run ingestion on first startup or when explicitly requested
     if (process.env.RUN_INGESTION === "true" || process.env.NODE_ENV === "production") {
+      await waitForRedis();
       await waitForServices();
     }
 

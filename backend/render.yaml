@@ -26,8 +26,8 @@ services:
   - type: private_service
     name: rag-chatbot-redis
     env: docker
-    region: oregon
-    plan: starter
+    region: singapore
+    plan: free
     dockerImage: manishsyal99/rag-redis:7
     ports:
       - port: 6379
@@ -36,8 +36,8 @@ services:
   - type: private_service
     name: rag-chatbot-chroma
     env: docker
-    region: oregon
-    plan: starter
+    region: singapore
+    plan: free
     dockerImage: manishsyal99/rag-chroma:latest
     ports:
       - port: 8000
