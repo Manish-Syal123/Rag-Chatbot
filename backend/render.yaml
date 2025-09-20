@@ -43,7 +43,7 @@ services:
     plan: free
     dockerfilePath: ./chroma.Dockerfile
     dockerContext: .
-    healthCheckPath: /api/v1/heartbeat
+    healthCheckPath: /api/v2/heartbeat
     autoDeploy: false
     envVars:
       - key: CHROMA_SERVER_HOST

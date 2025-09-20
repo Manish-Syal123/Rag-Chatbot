@@ -18,7 +18,7 @@ async function waitForServices() {
 
   while (!chromaReady && attempts < maxAttempts) {
     try {
-      await axios.get(`${config.chromaUrl}/api/v1/heartbeat`, { timeout: 5000 });
+      await axios.get(`${config.chromaUrl}/api/v2/heartbeat`, { timeout: 5000 });
       chromaReady = true;
       console.log("✅ ChromaDB is ready");
     } catch (error) {
