@@ -3,7 +3,7 @@ const { config } = require("./config");
 
 // Create a dummy embedding function to avoid default one
 class DummyEmbeddingFunction {
-  generateEmbeddings() {
+  async generateEmbeddings() {
     return [];
   }
 }
@@ -13,13 +13,32 @@ let collection;
 
 async function getCollection() {
   if (!client) {
-    client = new ChromaClient({ path: config.chromaUrl });
+    // Parse the ChromaDB URL to get host and port
+    const chromaUrl = new URL(config.chromaUrl);
+    
+    client = new ChromaClient({
+      host: chromaUrl.hostname,
+      port: parseInt(chromaUrl.port),
+      ssl: chromaUrl.protocol === 'https:',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      fetchOptions: {
+        timeout: 60000,
+      },
+    });
   }
+  
   if (!collection) {
     try {
       // Try to get existing collection first
-      collection = await client.getCollection({ name: config.chromaCollection });
+      collection = await client.getCollection({
+        name: config.chromaCollection,
+        embeddingFunction: new DummyEmbeddingFunction(),
+      });
+      console.log(`Connected to existing collection: ${config.chromaCollection}`);
     } catch (error) {
+      console.log(`Creating new collection: ${config.chromaCollection}`);
       // If collection doesn't exist, create it with dummy embedding function
       collection = await client.createCollection({
         name: config.chromaCollection,
@@ -43,7 +62,10 @@ async function upsertDocuments(items) {
 
 async function similaritySearch(queryEmbedding, topK = 5) {
   const coll = await getCollection();
-  const result = await coll.query({ queryEmbeddings: [queryEmbedding], nResults: topK });
+  const result = await coll.query({
+    queryEmbeddings: [queryEmbedding],
+    nResults: topK,
+  });
   const matches = [];
   if (result && result.ids && result.ids[0]) {
     for (let i = 0; i < result.ids[0].length; i++) {

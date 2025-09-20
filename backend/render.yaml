@@ -14,31 +14,36 @@ services:
       - key: GEMINI_API_KEY
         sync: false
       - key: REDIS_URL
-        value: redis://rag-chatbot-redis:6379
+        fromService:
+          type: redis
+          name: rag-chatbot-redis
+          property: connectionString
       - key: CHROMA_URL
-        value: http://rag-chatbot-chroma:8000
+        fromService:
+          type: web
+          name: rag-chatbot-chroma
+          property: host
       - key: CHROMA_COLLECTION
         value: news_articles
       - key: SESSION_TTL_SECONDS
         value: 86400
 
-  # Redis (using your Docker Hub image)
-  - type: private_service
+  # Redis Service
+  - type: redis
     name: rag-chatbot-redis
-    env: docker
-    region: singapore
+    ipAllowList: []
     plan: free
-    dockerImage: manishsyal99/rag-redis:7
-    ports:
-      - port: 6379
 
-  # ChromaDB (using your Docker Hub image)
-  - type: private_service
+  # ChromaDB Service
+  - type: web
     name: rag-chatbot-chroma
     env: docker
-    region: singapore
     plan: free
-    dockerImage: manishsyal99/rag-chroma:latest
-    ports:
-      - port: 8000
+    dockerfilePath: ./chroma.Dockerfile
+    dockerContext: .
     healthCheckPath: /api/v1/heartbeat
+    envVars:
+      - key: CHROMA_SERVER_HOST
+        value: 0.0.0.0
+      - key: CHROMA_SERVER_HTTP_PORT
+        value: 8000
