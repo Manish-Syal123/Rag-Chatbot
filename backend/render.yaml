@@ -22,7 +22,7 @@ services:
         fromService:
           type: web
           name: rag-chatbot-chroma
-          property: host
+          property: hostport
       - key: CHROMA_COLLECTION
         value: news_articles
       - key: SESSION_TTL_SECONDS

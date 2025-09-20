@@ -13,9 +13,12 @@ let collection;
 
 async function getCollection() {
   if (!client) {
-    // Create ChromaDB client with the full URL
+    // Configure ChromaDB client with host, port, and ssl
+    const chromaUrl = new URL(config.chromaUrl);
     client = new ChromaClient({
-      path: config.chromaUrl,
+      host: chromaUrl.hostname,
+      port: chromaUrl.port || (chromaUrl.protocol === 'https:' ? '443' : '80'),
+      ssl: chromaUrl.protocol === 'https:',
       headers: {
         'Content-Type': 'application/json',
       },
