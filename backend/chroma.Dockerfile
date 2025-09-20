@@ -11,5 +11,5 @@ ENV CHROMA_SERVER_HTTP_PORT=8000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
   CMD curl -f http://localhost:8000/api/v1/heartbeat || exit 1
 
-# Start ChromaDB
-CMD ["python", "-m", "chromadb.app", "--host", "0.0.0.0", "--port", "8000"]
+# The chromadb/chroma image already has the correct entrypoint
+# No need to specify CMD as the base image handles it
