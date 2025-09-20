@@ -27,10 +27,12 @@ services:
         value: news_articles
       - key: SESSION_TTL_SECONDS
         value: 86400
+      - key: RUN_INGESTION
+        value: "true"
 
   # Redis Service
   - type: redis
-    name: rag-chatbot-redis
+    name: rag-chatbot-keyvalue
     ipAllowList: []
     plan: free
 
@@ -42,8 +44,11 @@ services:
     dockerfilePath: ./chroma.Dockerfile
     dockerContext: .
     healthCheckPath: /api/v1/heartbeat
+    autoDeploy: false
     envVars:
       - key: CHROMA_SERVER_HOST
         value: 0.0.0.0
       - key: CHROMA_SERVER_HTTP_PORT
         value: 8000
+      - key: CHROMA_SERVER_CORS_ORIGINS
+        value: "*"
