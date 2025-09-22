@@ -11,6 +11,7 @@ const config = {
   geminiApiKey: process.env.GEMINI_API_KEY || "",
   geminiModel: process.env.GEMINI_MODEL || "gemini-1.5-flash",
   jinaApiKey: process.env.JINA_API_KEY || "",
+  nodeEnv: process.env.NODE_ENV || "development",
 };
 
 module.exports = { config };

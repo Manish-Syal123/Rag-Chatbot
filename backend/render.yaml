@@ -1,0 +1,61 @@
+services:
+  # Backend Web Service (Node.js)
+  - type: web
+    name: rag-chatbot-backend
+    env: node
+    region: singapore
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: JINA_API_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: rag-chatbot-redis
+          property: connectionString
+      - key: CHROMA_URL
+        fromService:
+          type: web
+          name: rag-chatbot-chroma
+          property: hostport
+      - key: CHROMA_COLLECTION
+        value: news_articles
+      - key: SESSION_TTL_SECONDS
+        value: 86400
+      - key: RUN_INGESTION
+        value: "true"
+
+  # Redis Service
+  - type: redis
+    name: rag-chatbot-keyvalue
+    ipAllowList: []
+    plan: free
+
+  # ChromaDB Service
+  - type: web
+    name: rag-chatbot-chroma
+    env: docker
+    plan: free
+    region: singapore
+    dockerfilePath: ./chroma.Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/v2/heartbeat
+    autoDeploy: false
+    envVars:
+      - key: CHROMA_SERVER_HOST
+        value: 0.0.0.0
+      - key: CHROMA_SERVER_HTTP_PORT
+        value: 8000
+      - key: CHROMA_SERVER_CORS_ORIGINS
+        value: "*"
+    # disk:
+    #   name: chroma-data
+    #   mountPath: /chroma/chroma
+    #   sizeGB: 1
