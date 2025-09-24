@@ -21,6 +21,20 @@ async function getHistory(sessionId) {
   return raw ? JSON.parse(raw) : [];
 }
 
+//get whole/ all session history
+async function getAllSessionsHistory() {
+  const client = await ensureRedis();
+  const keys = await client.keys("session:*:history");
+  const sessions = await Promise.all(
+    keys.map(async (key) => {
+      const sessionId = key.split(":")[1];
+      const history = await getHistory(sessionId);
+      return { sessionId, history };
+    })
+  );
+  return sessions;
+}
+
 async function appendMessage(sessionId, role, content) {
   const client = await ensureRedis();
   const history = await getHistory(sessionId);
@@ -36,4 +50,4 @@ async function clearHistory(sessionId) {
   await client.del(sessionKey(sessionId));
 }
 
-module.exports = { ensureRedis, getHistory, appendMessage, clearHistory };
+module.exports = { ensureRedis, getHistory, getAllSessionsHistory, appendMessage, clearHistory };
