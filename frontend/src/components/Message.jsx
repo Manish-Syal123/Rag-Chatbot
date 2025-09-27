@@ -1,5 +1,5 @@
 import ReactMarkdown from "react-markdown";
-import { BotMessageSquare, CircleUser, User } from "lucide-react";
+import { BotMessageSquare, User } from "lucide-react";
 
 const Message = ({ message }) => {
   const isUser = message.role === "user";

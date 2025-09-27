@@ -1,18 +1,7 @@
 @use "sass:color";
+@use "variables" as *;
 
-// Variables
-$primary-color: #3b82f6;
-$secondary-color: #06b6d4;
-$background-color: #1e293b;
-$surface-color: #334155;
-$text-color: #f1f5f9;
-$text-muted: #94a3b8;
-$border-color: #475569;
-
-@import "sidebar";
-$success-color: #10b981;
-$error-color: #ef4444;
-$warning-color: #f59e0b;
+@use "sidebar";
 
 // Global styles
 * {
