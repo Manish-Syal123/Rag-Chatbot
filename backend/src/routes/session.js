@@ -1,5 +1,5 @@
 const express = require("express");
-const { clearHistory, getHistory } = require("../services/redis");
+const { clearHistory, getHistory, getAllSessionsHistory } = require("../services/redis");
 
 const router = express.Router();
 
@@ -19,6 +19,16 @@ router.get("/history/:sessionId", async (req, res, next) => {
     const { sessionId } = req.params;
     const history = await getHistory(sessionId);
     res.json({ sessionId, history });
+  } catch (err) {
+    next(err);
+  }
+});
+
+//get all sessions history
+router.get("/history", async (req, res, next) => {
+  try {
+    const sessions = await getAllSessionsHistory();
+    res.json({ sessions });
   } catch (err) {
     next(err);
   }
