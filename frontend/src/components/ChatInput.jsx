@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { SendIcon } from "./IconComponents";
+import { SendHorizontal, Loader } from "lucide-react";
 
 const ChatInput = ({ onSend, disabled }) => {
   const [text, setText] = useState("");
@@ -45,7 +45,7 @@ const ChatInput = ({ onSend, disabled }) => {
         className="chat-input__button"
         aria-label="Send Message"
       >
-        {disabled ? "..." : "Send"}
+        {disabled ? <Loader className="spinner" /> : <SendHorizontal />}
       </button>
     </div>
   );

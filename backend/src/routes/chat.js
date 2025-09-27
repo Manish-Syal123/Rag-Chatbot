@@ -20,7 +20,16 @@ router.post("/message", async (req, res, next) => {
     const queryEmbedding = await embedText(message);
     const contexts = await similaritySearch(queryEmbedding, 5);
 
-    const answer = await generateAnswer(message, contexts);
+    let answer;
+    try {
+      answer = await generateAnswer(message, contexts);
+    } catch (err) {
+      if (err.status === 503) {
+        answer = "The model is overloaded. Please try again later.";
+      } else {
+        throw err; // Re-throw other errors
+      }
+    }
 
     await appendMessage(sessionId, "assistant", answer);
 
