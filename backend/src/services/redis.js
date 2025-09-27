@@ -4,12 +4,29 @@ const { config } = require("./config");
 const redis = createClient({ url: config.redisUrl });
 redis.on("error", (err) => console.error("Redis Client Error", err));
 
-let connected = false;
+let connectionPromise = null;
+
 async function ensureRedis() {
-  if (!connected) {
-    await redis.connect();
-    connected = true;
+  // Check if already connected
+  if (redis.isReady) {
+    return redis;
   }
+  
+  // Check if connection is in progress
+  if (connectionPromise) {
+    await connectionPromise;
+    return redis;
+  }
+  
+  // Start new connection
+  connectionPromise = redis.connect().catch((err) => {
+    console.error("Failed to connect to Redis:", err);
+    connectionPromise = null; // Reset on error
+    throw err;
+  });
+  
+  await connectionPromise;
+  connectionPromise = null; // Reset after successful connection
   return redis;
 }
 
