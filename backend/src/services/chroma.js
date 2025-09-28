@@ -11,6 +11,33 @@ class DummyEmbeddingFunction {
 let client;
 let collection;
 
+// Helper function to implement exponential backoff for rate limiting
+async function withRetry(fn, maxRetries = 5, initialDelay = 1000) {
+  let retries = 0;
+  while (retries < maxRetries) {
+    try {
+      return await fn();
+    } catch (error) {
+      // Check if it's a rate limit error
+      if (error.name === 'ChromaRateLimitError' || error.message?.includes('Rate limit exceeded')) {
+        retries++;
+        if (retries >= maxRetries) {
+          console.error(`Max retries (${maxRetries}) reached for ChromaDB operation`);
+          throw error;
+        }
+        
+        // Calculate exponential backoff delay with jitter
+        const delay = initialDelay * Math.pow(2, retries) + Math.random() * 1000;
+        console.log(`ChromaDB rate limit hit, retrying in ${Math.round(delay/1000)}s (attempt ${retries}/${maxRetries})...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      } else {
+        // Not a rate limit error, rethrow
+        throw error;
+      }
+    }
+  }
+}
+
 async function getCollection() {
   if (!client) {
     // Configure ChromaDB client with host, port, and ssl
@@ -30,18 +57,27 @@ async function getCollection() {
   
   if (!collection) {
     try {
-      // Try to get existing collection first
-      collection = await client.getCollection({
-        name: config.chromaCollection,
-        embeddingFunction: new DummyEmbeddingFunction(),
+      // Try to get existing collection first with retry logic
+      collection = await withRetry(async () => {
+        return await client.getCollection({
+          name: config.chromaCollection,
+          embeddingFunction: new DummyEmbeddingFunction(),
+        });
       });
       console.log(`Connected to existing collection: ${config.chromaCollection}`);
     } catch (error) {
+      if (error.name === 'ChromaRateLimitError' || error.message?.includes('Rate limit exceeded')) {
+        console.error('Failed to connect to ChromaDB due to rate limiting after multiple retries');
+        throw error;
+      }
+      
       console.log(`Creating new collection: ${config.chromaCollection}`);
-      // If collection doesn't exist, create it with dummy embedding function
-      collection = await client.createCollection({
-        name: config.chromaCollection,
-        embeddingFunction: new DummyEmbeddingFunction(),
+      // If collection doesn't exist, create it with dummy embedding function and retry logic
+      collection = await withRetry(async () => {
+        return await client.createCollection({
+          name: config.chromaCollection,
+          embeddingFunction: new DummyEmbeddingFunction(),
+        });
       });
     }
   }
@@ -51,20 +87,25 @@ async function getCollection() {
 async function upsertDocuments(items) {
   // items: [{id, text, metadata, embedding?}]
   const coll = await getCollection();
-  await coll.upsert({
-    ids: items.map((i) => i.id),
-    documents: items.map((i) => i.text),
-    metadatas: items.map((i) => i.metadata || {}),
-    embeddings: items[0].embedding ? items.map((i) => i.embedding) : undefined,
+  await withRetry(async () => {
+    await coll.upsert({
+      ids: items.map((i) => i.id),
+      documents: items.map((i) => i.text),
+      metadatas: items.map((i) => i.metadata || {}),
+      embeddings: items[0].embedding ? items.map((i) => i.embedding) : undefined,
+    });
   });
 }
 
 async function similaritySearch(queryEmbedding, topK = 5) {
   const coll = await getCollection();
-  const result = await coll.query({
-    queryEmbeddings: [queryEmbedding],
-    nResults: topK,
+  const result = await withRetry(async () => {
+    return await coll.query({
+      queryEmbeddings: [queryEmbedding],
+      nResults: topK,
+    });
   });
+  
   const matches = [];
   if (result && result.ids && result.ids[0]) {
     for (let i = 0; i < result.ids[0].length; i++) {
