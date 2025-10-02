@@ -31,7 +31,7 @@ git push origin main
      - **Runtime**: `Node`
      - **Build Command**: `npm install`
      - **Start Command**: `npm start`
-     - **Plan**: `Starter` ($7/month)
+     - **Plan**: `Starter` ($7/month) or `Free`
 
 3. **Create Redis Instance**:
 
@@ -45,7 +45,7 @@ git push origin main
    - **Name**: `rag-chatbot-chroma`
    - **Runtime**: `Docker`
    - **Dockerfile Path**: `./chroma.Dockerfile`
-   - **Plan**: `Starter` ($7/month)
+   - **Plan**: `Starter` ($7/month) or `Free`
 
 ### Option B: Using render.yaml (Alternative)
 
@@ -108,6 +108,22 @@ Update your frontend's environment variables:
 VITE_API_BASE=https://your-backend.onrender.com
 ```
 
+### Step 6: Deploy Frontend on Vercel
+
+1. **Go to Vercel Dashboard**: https://vercel.com
+2. **Import Project**:
+   - Connect your GitHub repository
+   - Select the frontend folder
+3. **Configure Project**:
+   - **Name**: `rag-chatbot-frontend`
+   - **Build Command**: `npm install && npm run build`
+   - **Output Directory**: `dist`
+4. **Set Environment Variables**:
+   - `VITE_API_BASE`: https://your-backend.onrender.com
+5. **Deploy**: Click "Deploy"
+6. **Test**: Visit the provided Vercel URL to ensure everything is working
+<hr>
+
 ## Troubleshooting
 
 ### Common Issues:
@@ -140,19 +156,55 @@ VITE_API_BASE=https://your-backend.onrender.com
 - **Health Checks**: Render automatically monitors your service health
 - **Metrics**: Available in the "Metrics" tab
 
-## Cost Estimate
+<hr>
 
-- **Backend Service**: $7/month (Starter plan)
-- **ChromaDB Service**: $7/month (Starter plan)
-- **Redis**: Free (Free plan)
-- **Total**: ~$14/month
+### Simplefied Deployment steps
 
-## Production Considerations
+<hr>
 
-1. **Scaling**: Upgrade to higher plans for more resources
-2. **Monitoring**: Set up alerts for service health
-3. **Backup**: Regular backups of your data
-4. **Security**: Use strong API keys and rotate them regularly
+#### Backend Render Deployment
+
+1. Create a new Web Service on Render
+2. Connect your GitHub repository
+3. Use the following settings:
+   - Name: rag-chatbot-backend
+   - Environment: Node
+   - Build Command: npm install
+   - Start Command: npm start
+   - Plan: Free or Starter
+4. Set the required environment variables (JINA_API_KEY , GEMINI_API_KEY and other environment variables)
+5. The other environment variables will be automatically configured through the render.yaml file
+
+#### Redis / key-value store on Render
+
+1. Create a new Key Value service on Render
+2. Use the following settings:
+   - Name: rag-chatbot-keyvalue (or any name you prefer)
+   - Region: Choose the same region you'll use for other services
+   - Instance Type: Free
+
+#### ChromaDB Deployment on Render
+
+1. Create a new Web Service on Render. Go to https://dashboard.render.com/new/web-service
+2. Use the following settings:
+   - Name: rag-chatbot-chroma
+   - Environment: Docker
+   - Region: Same as Key Value service
+   - Branch: main
+   - Root Directory: backend (since chroma.Dockerfile is now in the backend folder)
+   - Docker Build Context Directory: backend
+   - Dockerfile Path: ./chroma.Dockerfile
+   - Environment Variables:
+     - CHROMA_SERVER_CORS_ORIGINS="Your rag-chatbot-backend URL"
+     - CHROMA_SERVER_HOST=0.0.0.0
+     - CHROMA_SERVER_HTTP_PORT=8000
+
+#### For the backend service (rag-chatbot-backend), you'll need to set these environment variables:
+
+1. From Key Value service:
+   - REDIS_URL: Copy from Key Value service dashboard after creation
+2. From ChromaDB service:
+   - CHROMA_URL: Your ChromaDB service URL (e.g., https://rag-chatbot-chroma.onrender.com )
 
 ## Support
 
